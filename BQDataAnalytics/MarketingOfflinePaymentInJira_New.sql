@@ -1,7 +1,7 @@
 
+
 DECLARE period DATE;
 SET period = DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH), MONTH);
-
 WITH jira_offline_payment_table AS (
     SELECT 
         payment.created_date AS created_at, 
@@ -13,8 +13,9 @@ WITH jira_offline_payment_table AS (
         SUBSTRING(STRING(DATE(payment.created_date)),1,7) AS month_date,
         payment.ticket,
         payment.cost_type,
-        payment.costs_overall,
+        IF(payment.costs_overall IS NULL, 0, payment.costs_overall) AS costs_overall,
         payment.version_date,
+        -- This function used to return the array of date based on date_part 
         GENERATE_DATE_ARRAY(DATE(payment.start_date), DATE(payment.end_date), INTERVAL 1 DAY) AS date_range,
         ROW_NUMBER() OVER (PARTITION BY payment.ticket, payment.cost_type ORDER BY payment.version_date DESC) AS rank_updated_date,
     FROM `fulfillment-dwh-production.pandata_report.marketing_cost_report_offline_jira` AS payment
@@ -61,18 +62,8 @@ WITH jira_offline_payment_table AS (
         cost_type,
         (costs_overall/date_day_range) AS avg_costs_overall_per_day
     FROM result_table_v4
-),result_table_v6 AS(
-    SELECT 
-        ticket,
-        start_date,
-        end_date,
-        cost_type,
-        costs_overall,
-        month_date_range,
-        COUNT(date_day_range) OVER(PARTITION BY month_date_range ORDER BY date_day_range) AS date_day_range
-        --SUM(costs_overall)/COUNT(ROW_NUMBER() OVER(PARTITION BY month_date_range ORDER BY ticket))
-    FROM result_table_v3
-), result_table_v7 AS(
+)
+, result_table_v6 AS(
     SELECT  
         ticket,
         start_date,
@@ -81,7 +72,7 @@ WITH jira_offline_payment_table AS (
         month_date_range,
         costs_overall,
         COUNT(date_day_range) AS count_date_day_range
-    FROM result_table_v6
+    FROM result_table_v3
     GROUP BY 1,2,3,4,5,6
 ),result_table_last_version AS(
     SELECT DISTINCT
@@ -89,73 +80,13 @@ WITH jira_offline_payment_table AS (
         v5.start_date,
         v5.end_date,
         v5.cost_type,
-        v7.month_date_range,
-        (v5.avg_costs_overall_per_day * v7.count_date_day_range) AS costs_overall_per_month
-    FROM result_table_v5 AS v5
-    LEFT JOIN result_table_v7 AS v7
-        ON v5.ticket = v7.ticket
-)
-
-SELECT * FROM result_table_last_version
---WHERE ticket = 'OMFPKH-1409' -- period = 1 month
---WHERE ticket = 'OMFPKH-1223' -- period = 2 month
---WHERE ticket = 'OMFPKH-1216'
---WHERE ticket = 'OMFPKH-1406'
-WHERE ticket = 'OMFPKH-61'
-ORDER BY ticket, month_date_range
-
-
-
-
-
-
-/* result_table_v4 AS(
-    SELECT 
-        ticket,
-        start_date,
-        end_date,
-        cost_type,
-        costs_overall,
-        month_date_range,
-        COUNT(date_day_range) OVER(PARTITION BY month_date_range ORDER BY date_day_range) AS date_day_range
-        --SUM(costs_overall)/COUNT(ROW_NUMBER() OVER(PARTITION BY month_date_range ORDER BY ticket))
-    FROM result_table_v3
-), result_table_v5 AS(
-    SELECT  
-        ticket,
-        start_date,
-        end_date,
-        cost_type,
-        month_date_range,
-        costs_overall,
-        COUNT(date_day_range) AS count_date_day_range
-    FROM result_table_v4
-    GROUP BY 1,2,3,4,5,6
-), result_table_v6 AS(
-    SELECT DISTINCT 
-        ticket,
-        start_date,
-        end_date,
-        cost_type,
-        month_date_range,
-        (costs_overall/count_date_day_range) AS avg_costs_overall_per_day
-    FROM result_table_v5
-), result_table_v7 AS(
-    SELECT 
-        v6.ticket,
-        v6.start_date,
-        v6.end_date,
-        v6.cost_type,
         v6.month_date_range,
-        (v6.avg_costs_overall_per_day * v5.count_date_day_range) AS costs_overall_per_month
-    FROM result_table_v6 AS v6
-    LEFT JOIN result_table_v5 AS v5
-        ON v6.ticket = v5.ticket
-        AND v6.month_date_range = v5.month_date_range 
+        (v5.avg_costs_overall_per_day * v6.count_date_day_range) AS costs_overall_per_month
+    FROM result_table_v5 AS v5
+    LEFT JOIN result_table_v6 AS v6
+        ON v5.ticket = v6.ticket
 )
-SELECT * FROM result_table_v4
---WHERE ticket = 'OMFPKH-1409' -- period = 1 month
-WHERE ticket = 'OMFPKH-1223' -- period = 2 month
-ORDER BY ticket --, date_day_range	
---, date_day_range*/
+SELECT * FROM result_table_last_version
+ORDER BY ticket
+
 
