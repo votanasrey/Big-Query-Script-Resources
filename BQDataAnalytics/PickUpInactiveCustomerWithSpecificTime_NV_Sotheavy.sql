@@ -42,10 +42,7 @@ WITH customer_pickup_table AS(
 ), result_table AS(
     SELECT
         c1.pd_customer_uuid,
-        c1.order_amount_local,
         c1.order_gmv_local,
-        --CASE WHEN c1.order_amount_local IS NULL THEN 0 ELSE c1.order_amount_local END AS order_amount_local,
-        --CASE WHEN c1.order_gmv_local IS NULL THEN 0 ELSE c1.order_gmv_local END AS order_gmv_local,
         c1.total_customer_valid_orders
     FROM customer_pickup_table AS c1
     LEFT JOIN customer_inactive_pickup_table AS c2
@@ -53,9 +50,8 @@ WITH customer_pickup_table AS(
     WHERE c2.pd_customer_uuid IS NULL
     
 )
-SELECT * FROM result_table
+SELECT * FROM result_table 
+ORDER BY order_gmv_local DESC
+LIMIT 600
 
---WHERE pd_customer_uuid = '45950_FP_KH'
---WHERE pd_customer_uuid = '500050412_FP_KH'
---WHERE pd_customer_uuid = '545809_FP_KH'
 
