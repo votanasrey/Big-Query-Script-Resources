@@ -1,4 +1,5 @@
 
+
 DECLARE period1, period2 DATE;
 DECLARE foodpanda_kh_entity STRING;
 SET foodpanda_kh_entity = 'FP_KH';
@@ -7,6 +8,8 @@ SET period2 = DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 10 MONTH), MONTH);
 WITH customer_pickup_table AS(
     SELECT
         orders.pd_customer_uuid,
+        cus.code AS customer_code,
+        cus.mobile_number,
         ROUND(SUM(CASE WHEN orders.is_valid_order IS TRUE THEN payment.amount_local END),2) AS order_amount_local,
         ROUND(SUM(CASE WHEN orders.is_valid_order IS TRUE THEN acc.gmv_local END ),2) AS order_gmv_local,
         COUNTIF(orders.is_valid_order IS TRUE) AS total_customer_valid_orders
@@ -14,6 +17,8 @@ WITH customer_pickup_table AS(
     LEFT JOIN UNNEST(orders.payments) AS payment
     LEFT JOIN `fulfillment-dwh-production.pandata_curated.pd_orders_agg_accounting` AS acc
         ON orders.uuid = acc.uuid
+    LEFT JOIN `fulfillment-dwh-production.pandata_curated.pd_customers` AS cus
+        ON orders.pd_customer_uuid = cus.uuid
     WHERE 
         orders.created_date_utc BETWEEN period2 AND period1
         AND acc.created_date_utc BETWEEN period2 AND period1
@@ -24,7 +29,7 @@ WITH customer_pickup_table AS(
         AND NOT orders.is_test_order
         AND NOT orders.is_failed_order
         AND orders.is_valid_order
-    GROUP BY 1
+    GROUP BY 1,2,3
 ), customer_inactive_pickup_table AS(
     SELECT
         orders.pd_customer_uuid,
@@ -42,6 +47,8 @@ WITH customer_pickup_table AS(
 ), result_table AS(
     SELECT
         c1.pd_customer_uuid,
+        c1.customer_code,
+        c1.mobile_number,
         c1.order_gmv_local,
         c1.total_customer_valid_orders
     FROM customer_pickup_table AS c1
