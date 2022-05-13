@@ -10,7 +10,7 @@ SET end_date = "2022-02-01"; -- able to change end_date here
     o.payment_type.title as payment_type,
     o.country_name AS country,
     pd_vendors.location.city AS vendor_city,
-    --o.delivery_provider,
+    o.delivery_provider.title,
     o.expedition_type,
     o.vendor_code,
     o.vendor_name,
