@@ -1,6 +1,4 @@
 
-
-
 WITH sf_table AS(
   SELECT
     c.close_date_local,

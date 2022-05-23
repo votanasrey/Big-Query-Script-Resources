@@ -21,7 +21,7 @@ WITH vendor_table AS (
     WHERE 
         vendor.global_entity_id = 'FP_KH'
         AND vendor.is_active
-        AND NOT vendor.is_private
+        AND NOT vendor.is_private   
         AND NOT vendor.is_test
         AND vb.business_type_apac IN ('restaurants', 'shops')
 )
