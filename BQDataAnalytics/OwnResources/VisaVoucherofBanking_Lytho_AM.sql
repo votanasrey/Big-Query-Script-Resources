@@ -1,7 +1,4 @@
 
-
-
-
 DECLARE date1, date2 DATE;
 SET date1 = "2021-01-01";
 

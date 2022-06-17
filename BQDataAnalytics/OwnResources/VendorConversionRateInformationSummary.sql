@@ -6,7 +6,6 @@ SET date2 = (CURRENT_DATE() - 2);
 WITH google_analytic_table AS(
   SELECT 
 
-    --ga.partition_date,
     va.ga_vendor_id,
     va.pd_vendor_code AS vendor_code,
 
@@ -15,18 +14,18 @@ WITH google_analytic_table AS(
     COUNT(CASE WHEN ga.funnel LIKE '1_____' THEN ga.funnel ELSE NULL END) AS home_counts,
     COUNT(CASE WHEN ga.funnel LIKE '_1____' THEN ga.funnel ELSE NULL END) AS list_counts,
     COUNT(CASE WHEN ga.funnel LIKE '__1___' THEN ga.funnel ELSE NULL END) AS menu_counts,
-    COUNT(CASE WHEN ga.funnel LIKE '___0__' THEN ga.funnel ELSE NULL END) AS add_to_cart_counts,
-    COUNT(CASE WHEN ga.funnel LIKE '____0_' THEN ga.funnel ELSE NULL END) AS checkout_counts,
-    COUNT(CASE WHEN ga.funnel LIKE '_____0' THEN ga.funnel ELSE NULL END) AS transaction_counts,
+    COUNT(CASE WHEN ga.funnel LIKE '___1__' THEN ga.funnel ELSE NULL END) AS add_to_cart_counts,
+    COUNT(CASE WHEN ga.funnel LIKE '____1_' THEN ga.funnel ELSE NULL END) AS checkout_counts,
+    COUNT(CASE WHEN ga.funnel LIKE '_____1' THEN ga.funnel ELSE NULL END) AS transaction_counts,
 
 
     COUNT(DISTINCT ga.ga_user_id) AS number_of_users_in_sessions,
     COUNT(DISTINCT CASE WHEN ga.funnel LIKE '1_____' THEN ga.ga_user_id ELSE NULL END) AS home_user_count,
     COUNT(DISTINCT CASE WHEN ga.funnel LIKE '_1____' THEN ga.ga_user_id ELSE NULL END) AS list_user_count,
     COUNT(DISTINCT CASE WHEN ga.funnel LIKE '__1___' THEN ga.ga_user_id ELSE NULL END) AS menu_user_count,
-    COUNT(DISTINCT CASE WHEN ga.funnel LIKE '___0__' THEN ga.ga_user_id ELSE NULL END) AS addtocart_user_count,
-    COUNT(DISTINCT CASE WHEN ga.funnel LIKE '____0_' THEN ga.ga_user_id ELSE NULL END) AS checkout_user_count,
-    COUNT(DISTINCT CASE WHEN ga.funnel LIKE '_____0' THEN ga.ga_user_id ELSE NULL END) AS transaction_user_count,
+    COUNT(DISTINCT CASE WHEN ga.funnel LIKE '___1__' THEN ga.ga_user_id ELSE NULL END) AS addtocart_user_count,
+    COUNT(DISTINCT CASE WHEN ga.funnel LIKE '____1_' THEN ga.ga_user_id ELSE NULL END) AS checkout_user_count,
+    COUNT(DISTINCT CASE WHEN ga.funnel LIKE '_____1' THEN ga.ga_user_id ELSE NULL END) AS transaction_user_count,
 
 
     ROUND(COUNT(DISTINCT CASE WHEN ga.is_transaction THEN ga.ga_session_id END) / COUNT(DISTINCT ga.ga_session_id),5) AS CVR,
@@ -62,13 +61,7 @@ WITH google_analytic_table AS(
   GROUP BY 1,2
   ORDER BY 1 DESC
 )
-SELECT * FROM google_analytic_table 
+SELECT * FROM google_analytic_table
 --WHERE vendor_code IN (SELECT vendor_code FROM google_analytic_table GROUP BY 1 HAVING COUNT(1)>1)
 ORDER BY number_of_sessions DESC
-
-
-
-
-
-
 
